@@ -11,8 +11,9 @@ pygame.init()                                           # initialize pygame
 white = (255,255,255)                                         # defining Colors
 black = (0,0,0)
 red = (255,0,0)
-green = (0,155,0)
-blue = (0,0,255)
+blue = (0,0,155)
+darkgreen = (0,120,0)
+lightgreen = (0,200,0)
 
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
@@ -33,14 +34,14 @@ score_player2 = 0
 score_per_apple = 10
 
 head_img1 = pygame.image.load('snake_head.png')                # load snake head spirte
-head_img2 = pygame.image.load('snake_head.png')
+head_img2 = pygame.image.load('snake_head_lightgreen.png')
 
 apple_img = pygame.image.load('strawberry.png')          # load apple sprite
 
 
 
 clock = pygame.time.Clock()                              # variable to control FPS
-FPS = 10
+FPS = 15
 
 
 direction = "right"
@@ -51,6 +52,9 @@ smallfont = pygame.font.SysFont("comicsansms", 25)
 medfont = pygame.font.SysFont("comicsansms", 50)
 largefont = pygame.font.SysFont("comicsansms", 80)
 
+insult_list = ["noob","loser","moron","idiot","lamer","human paraquat","buzzkill "]
+
+gameOverCause = ""
 
 # Intro Loop
 
@@ -142,6 +146,9 @@ def randY():
 # apples' coords have to be in steps of 10 pixels (in steps of our block_size, e.g. (0,50) (0,60) (0,70)
 # and can't be in between ( e.g. apple can't be in (13, 38) coordinate, it has to be in (10, 40)
 
+def random_insult():
+    insult = insult_list[random.randrange(len(insult_list))]
+    return insult
 
 # PAUSE loop
 
@@ -178,20 +185,22 @@ def gameLoop():
 
     global score_player1
     global score_player2
-    score_player1 = 0
-    score_player2 = 0
 
     direction = "right"
     direction2 = "left"
+
 
     # Game variables
 
     gameExit = False
     gameOver = False
 
+    global gameOverCause
+
+        # first snake
     lead_x = WINDOW_WIDTH / 2 - 200
-    lead_y = WINDOW_HEIGHT / 2
-    lead_x_change = 0
+    lead_y = WINDOW_HEIGHT / 2 - block_size
+    lead_x_change = block_size
     lead_y_change = 0
 
     apple_x = randX()
@@ -205,7 +214,7 @@ def gameLoop():
     snakelength2 = 1
 
     lead_x2 = WINDOW_WIDTH / 2 + 200
-    lead_y2 = WINDOW_HEIGHT / 2 + 150
+    lead_y2 = WINDOW_HEIGHT / 2 + block_size
     lead_x2_change = -block_size
     lead_y2_change = 0
 
@@ -219,9 +228,12 @@ def gameLoop():
         while gameOver == True:
 
             gameDisplay.fill(white)
-            message_to_screen("Game over",  y_displacement = -50, color = red, font_size = "large")
+            message_to_screen("Game over",  y_displacement = -100, color = red, font_size = "large")
+            message_to_screen(gameOverCause,  y_displacement = 0, color = red, font_size = "small")
             message_to_screen("Press SPACE to play again or Q to quit",black, 50, font_size = "small")
-            message_to_screen("Your score: " + str(score_player1),black, 150, font_size = "small")
+            message_to_screen("Player 1 score: " + str(score_player1),black, 150, x_displacement = -250, font_size = "small")
+            message_to_screen("Player 2 score: " + str(score_player2),black, 150, x_displacement = 250, font_size = "small")
+
 
             pygame.display.update()
 
@@ -306,20 +318,27 @@ def gameLoop():
         lead_y2 += lead_y2_change
 
 
-        # check if snake crashed into itself (any segment except head is equal to head)
-        for eachSegment in snakelist[:-1]:
-            if eachSegment == snakehead:
-                gameOver = True
+
 
 
         # check if snake ran out of bounds
         if lead_x >= WINDOW_WIDTH or lead_x < 0 or lead_y < 0 or lead_y >= WINDOW_HEIGHT:
             gameOver = True
+            gameOverCause = "Player 1 tried to desert the field of battle! What a " + random_insult() + " !!!"
+            score_player1 -= 20
 
         # check if snake2 ran out of bounds
         if lead_x2 >= WINDOW_WIDTH or lead_x2 < 0 or lead_y2 < 0 or lead_y2 >= WINDOW_HEIGHT:
             gameOver = True
+            gameOverCause = "Player 2 tried to run away like a chicken! What a " + random_insult() + " !!!"
+            score_player2 -= 20
 
+        # if both ran out of bounds at the same time
+        if (lead_x >= WINDOW_WIDTH or lead_x < 0 or lead_y < 0 or lead_y >= WINDOW_HEIGHT) and (lead_x2 >= WINDOW_WIDTH or lead_x2 < 0 or lead_y2 < 0 or lead_y2 >= WINDOW_HEIGHT):
+            gameOver = True
+            gameOverCause = "Stop running away, you cowards !"
+            score_player1 -= 20
+            score_player2 -= 20
 
         gameDisplay.fill(white)                                                 # draws 'in the background'. we clean the screen.
 
@@ -343,8 +362,42 @@ def gameLoop():
             del snakelist2[0]
 
         # drawing snake and snake2
-        draw_snake(block_size, snakelist, color = green, head_image=head_img1, direction = direction)
-        draw_snake(block_size, snakelist2, color = red, head_image=head_img1, direction = direction2)
+        draw_snake(block_size, snakelist, color = darkgreen, head_image=head_img1, direction = direction)
+        draw_snake(block_size, snakelist2, color = lightgreen, head_image=head_img2, direction = direction2)
+
+
+        # check if snake crashed into itself (any segment except head is equal to head)
+        for eachSegment in snakelist[:-1]:
+            if eachSegment == snakehead:
+                gameOver = True
+                gameOverCause = "Player 1 crashed into himself !"
+                score_player1 -= 20
+
+        # check if snake2 crashed into itself (any segment except head is equal to head)
+        for eachSegment2 in snakelist2[:-1]:
+            if eachSegment2 == snakehead2:
+                gameOver = True
+                gameOverCause = "Player 2 crashed into himself !"
+                score_player2 -= 20
+
+
+
+
+        if  snakehead == snakehead2:
+            gameOver = True
+            gameOverCause = "Watch where you going  both of ya !!!"
+            score_player1 -= 20
+            score_player2 -= 20
+
+        elif snakehead in snakelist2:
+            gameOver = True
+            gameOverCause = "Player 1 crashed into the mighty body of Snake 2 !"
+            score_player1 -= 20
+
+            if snakehead2 in snakelist:
+                gameOver = True
+                gameOverCause = "Player 2 crashed into the steel abs of Snake 1 ! "
+                score_player2 -= 20
 
         # snake hit the apple
         if lead_x + block_size > apple_x and lead_x < apple_x + appleThickness :
